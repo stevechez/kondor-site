@@ -1,17 +1,21 @@
-import { Toaster } from "@/components/ui/sonner"
+import { GoogleAnalytics } from '@next/third-parties/google';
+import { Toaster } from "@/components/ui/sonner";
+import { client } from "@/lib/sanity.client";
+import { heroQuery } from "@/lib/sanity.queries";
+import FloatingCallButton from "@/components/ui/floating-call-button";
 
-export const metadata = {
-  title: 'Contractor Name | Premium Home Remodeling in [Location]',
-  description: 'Licensed and insured general contractor specializing in kitchen, bath, and full home remodels.',
-}
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const heroData = await client.fetch(heroQuery);
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="antialiased">
         {children}
+        <FloatingCallButton phoneNumber={heroData?.phoneNumber} />
         <Toaster position="top-center" richColors />
       </body>
+      {/* Replace with the contractor's actual ID from their .env */}
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ""} />
     </html>
-  )
+  );
 }

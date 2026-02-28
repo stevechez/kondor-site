@@ -1,93 +1,66 @@
-"use client"
+"use client";
 
-import { toast } from "sonner" // Direct import, no hook needed
-import { sendLeadAction } from "@/app/actions/send-lead"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import confetti from "canvas-confetti";
+import { toast } from "sonner";
+import { sendGAEvent } from '@next/third-parties/google';
 
-type FormValues = z.infer<typeof formSchema>;
-
+// 1. Define the Validation Schema
 const formSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().min(10, "Valid phone required"),
-  message: z.string().min(5, "Tell us about your project"),
+  name: z.string().min(2, "Name is too short"),
+  phone: z.string().regex(/^\d{10}$/, "Enter a valid 10-digit phone number"),
+  details: z.string().min(10, "Please provide a bit more detail about your project"),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 export default function LeadForm() {
-  // Pass the Zod infer type here
-  const form = useForm<z.infer<typeof formSchema>>({
+  // 2. Hook up the Resolver
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      message: "",
-    },
   });
- 
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-async function onSubmit(values: z.infer<typeof formSchema>) {
-  // Start a loading toast to give the user immediate feedback
-  const promise = sendLeadAction(values);
+  const onSubmit = async (data: FormData) => {
+    try {
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-  toast.promise(promise, {
-    loading: 'Sending your inquiry...',
-    success: (result) => {
-      if (!result.success) throw new Error(); // Trigger error state if action fails
-      form.reset();
-      return 'Message sent! The contractor will follow up shortly.';
-    },
-    error: 'Failed to send message. Please try calling directly.',
-  });
-}    alert("Inquiry Sent!");
-  }
+      if (response.ok) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        sendGAEvent("event", "project_inquiry_sent");
+        toast.success("Project inquiry sent!");
+        reset();
+      }
+    } catch (error) {
+      toast.error("Failed to send. Please call us directly.");
+    }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-  control={form.control}
-  name="name" // This must match a key in your schema
-  render={({ field }: { field: any }) => ( // Quick fix: cast to any if inference fails
-    <FormItem>
-      <FormLabel>Full Name</FormLabel>
-      <FormControl>
-        <Input placeholder="John Smith" {...field} />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-        )} />
-        <FormField
-  control={form.control}
-  name="phone" // This must match a key in your schema
-  render={({ field }: { field: any }) => ( // Quick fix: cast to any if inference fails
-    <FormItem>
-      <FormLabel>Phone</FormLabel>
-      <FormControl>
-        <Input placeholder="555-555-1212" {...field} />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-        )} />
-        <FormField
-  control={form.control}
-  name="message" // This must match a key in your schema
-  render={({ field }: { field: any }) => ( // Quick fix: cast to any if inference fails
-    <FormItem>
-      <FormLabel>Project Details</FormLabel>
-      <FormControl>
-        <Input placeholder="John Smith" {...field} />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-        )} />
-        <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800">Request Quote</Button>
-      </form>
-    </Form>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <input {...register("name")} placeholder="Full Name" className="w-full p-3 border rounded-md" />
+        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+      </div>
+
+      <div>
+        <input {...register("phone")} placeholder="Phone (e.g. 8315551212)" className="w-full p-3 border rounded-md" />
+        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+      </div>
+
+      <div>
+        <textarea {...register("details")} placeholder="Project Details" className="w-full p-3 border rounded-md h-32" />
+        {errors.details && <p className="text-red-500 text-xs mt-1">{errors.details.message}</p>}
+      </div>
+      
+      <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-all">
+        Send Inquiry
+      </button>
+    </form>
   );
 }

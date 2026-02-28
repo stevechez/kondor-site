@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "next:dev": "next dev",
+    "sanity:dev": "sanity dev",
+    "dev": "concurrently \"pnpm next:dev\" \"pnpm sanity:dev\" --names \"NEXT,SANITY\" --prefix-colors \"blue,green\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@next/third-parties": "^16.1.6",
     "@react-google-maps/api": "^2.20.8",
     "@sanity/vision": "^5.12.0",
     "@supabase/supabase-js": "^2.98.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "client": "link:@/sanity/client",
     "clsx": "^2.1.1",
@@ -27,15 +31,18 @@
     "resend": "^6.9.3",
     "sanity": "^5.12.0",
     "sonner": "^2.0.7",
+    "styled-components": "^6.3.11",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "shadcn": "^3.8.5",
