@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 
 export default function Hero({ data }: { data: any }) {
+  if (!data) return null; // Safety guard for empty Sanity data
   return (
     <section className="relative min-h-[600px] flex items-center bg-slate-900 overflow-hidden">
       {/* Dynamic Background Image */}
